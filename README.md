@@ -13,7 +13,7 @@ CommandStationGUI
  
 1. Clone this repository (HOW: "git clone https://github.com/RUMDLoop/CommandStationGUI")
 2. If there is a new feature to be added, or a next step, or a bug, please make an [issue](https://help.github.com/articles/creating-an-issue/)
-3. Create a new branch in this format: "Name/IS-<Issue Number>", so if I was working on Issue 5, it would be "shreyas/IS-5", if you are just playing around replace the part after the slash with "play", like "shreyas/play". (HOW: "git checkout -b <branch-name>
+3. Create a new branch in this format: "Name/IS-(Issue Number)", so if I was working on Issue 5, it would be "shreyas/IS-5", if you are just playing around replace the part after the slash with "play", like "shreyas/play". (HOW: "git checkout -b (branch-name)
 4. Once you are done and would like to contribute to the master branch, make a [pull request](https://help.github.com/articles/creating-a-pull-request/). Your code will be reviewed and merged in if it works and is good code
 5. Once it has been merged in, delete your branch and repeat this process
 
