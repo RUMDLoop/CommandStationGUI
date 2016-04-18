@@ -35,7 +35,7 @@ elif async_mode == 'gevent':
 
 import time
 from threading import Thread
-from flask import Flask, render_template, session, request
+from flask import Flask, render_template, session, request, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room, \
     close_room, rooms, disconnect
 
@@ -56,9 +56,14 @@ def background_thread():
                       namespace='/test')
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.route('/<client>')
+def index(client=None):
+    if client == 'external':
+        return render_template('index.html')
+    elif client == 'internal':
+        return jsonify({'success' : True})
+    else:
+        return jsonify({'success' : False})
 
 
 @socketio.on('my event', namespace='/test')
@@ -67,7 +72,7 @@ def test_message(message):
     emit('my response',
          {'data': message['data'], 'count': session['receive_count']})
 
-
+### TODO: Figure out what's the difference between this and just a regular emit to a channel
 @socketio.on('my broadcast event', namespace='/test')
 def test_broadcast_message(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
@@ -83,32 +88,6 @@ def join(message):
     emit('my response',
          {'data': 'In rooms: ' + ', '.join(rooms()),
           'count': session['receive_count']})
-
-
-@socketio.on('leave', namespace='/test')
-def leave(message):
-    leave_room(message['room'])
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': 'In rooms: ' + ', '.join(rooms()),
-          'count': session['receive_count']})
-
-
-@socketio.on('close room', namespace='/test')
-def close(message):
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response', {'data': 'Room ' + message['room'] + ' is closing.',
-                         'count': session['receive_count']},
-         room=message['room'])
-    close_room(message['room'])
-
-
-@socketio.on('my room event', namespace='/test')
-def send_room_message(message):
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': message['data'], 'count': session['receive_count']},
-         room=message['room'])
 
 
 @socketio.on('disconnect request', namespace='/test')
