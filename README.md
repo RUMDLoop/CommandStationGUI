@@ -6,7 +6,7 @@ CommandStationGUI
 1. Learn how to use [Git](https://www.codecademy.com/learn/learn-git)
 2. Learn how to write [Python](https://www.codecademy.com/learn/python)
 2. Install Flask and follow the quickstart tutorial (link below)
-3. Once you've done that, read about socket.io (link below) on Python and try implementing your own websocket application using that and Flask
+3. Once you've done that, read about socket.io (links below) on Python and try implementing your own websocket application using that and Flask
 4. If you would like to work on this, but haven't been assigned anything yet, message Shreyas on slack to see how you can help and to get access to the repository (note: this is different then getting access to the organization)
 
 ### Workflow
