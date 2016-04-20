@@ -81,10 +81,9 @@ def index(client=None):
     else:
         return jsonify({'success' : False})
 
-
 """
 
-Input: {'man_code':''}
+Input: {'man_code':'shrey'}
 Output:
         SUCCESS: {'status':'ok','pod_id':'','timestamp':''}
         FAIL: {'status':'error','reason':'','timestamp':''}
@@ -92,7 +91,7 @@ Output:
 @app.route('/getPodID',methods=['POST'])
 def create_pod():
     man_code = request.form['man_code']
-    if man_code == None or len(man_code) < 16:
+    if man_code == None:
         response = {'status' : 'error','reason' : 'invalid manafacturer code','timestamp' : datetime.datetime.utcnow()}
     else:
         search = mancodes.find_one({'man_code' : man_code})
@@ -109,7 +108,7 @@ def create_pod():
             pod = {'pod_id' : uuid_str, 'model' : 'Prometheus', 'operational' : True, 'createdAt' : datetime.datetime.utcnow(), 'updatedAt' : datetime.datetime.utcnow()}
             post_id = pods.insert_one(pod)
             if post_id != None:
-                response = {'status' : 'ok' : 'pod_id' : uuid_str : 'timestamp' : datetime.datetime.utcnow()}
+                response = {'status' : 'ok', 'pod_id' : uuid_str,'timestamp' : datetime.datetime.utcnow()}
             else:
                 response = {'status' : 'error', 'reason' : 'database upload failed', 'timestamp' : datetime.datetime.utcnow()}
     return jsonify(response)
@@ -134,20 +133,20 @@ def verify_auth_token(token):
     s = Serializer('secret_key')
     try:
         data = s.loads(token)
-    except SignatureExpired
+    except SignatureExpired:
         return 1
-    except BadSignature
+    except BadSignature:
         return 2
     return 0
 
 """
-Input: {'pod_id':''}
+Input: {'is_pod':'pod_id':'','client_id':''}
 Output:
         SUCCESS: {'status':'ok','pod_id':'',secret_token:'','timestamp':''}
         FAIL: {'status' : 'error','reason':'','timestamp':''}
 """
 @app.route('/auth', methods=['POST'])
-def authenticate:
+def authenticate():
     is_pod = request.form['is_pod']
     if is_pod:
         x_id = request.form['pod_id']
