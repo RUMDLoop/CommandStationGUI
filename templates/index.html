@@ -13,11 +13,14 @@
             // the socket.io documentation recommends sending an explicit package upon connection
             // this is specially important when using the global namespace
             var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+
+            var pod_id = ""
+
             // event handler for server sent data
             // the server will emit any responses or data to the channel known as 'my response'
             // when the client detects this response, it "html-ifies" the data and shows it on the page
             // this will be how telemetry is received and shown
-            socket.on('my response', function(msg) {
+            socket.on('data_receive_' + pod_id_val, function(msg) {
                 $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
             });
             // event handler for new connections
@@ -29,23 +32,23 @@
 
             //this will be used to send free form commands to the pod
             $('form#emit').submit(function(event) {
-                socket.emit('my event', {data: $('#emit_data').val()});
+                socket.emit('cmd_send', {data: $('#emit_data').val(),pod_id:pod_id_val });
                 return false;
             });
 
             //this will be used to connect with a specific pod
             $('form#join').submit(function(event) {
-                socket.emit('join', {room: $('#join_room').val()});
+                pod_id_val = $('#join_pod').val();
                 return false;
             });
 
             //this will be used for POD STOP command
             $('form#pod_stop').submit(function(event) {
-                socket.emit('leave', {room: $('#leave_room').val()});
+                socket.emit('stop', {data : 'pod_stop_cmd', token : token_val, pod_id : pod_id_val});
                 return false;
             });
 
-            //this will be used to disconnect from the pod it is conencted to
+            //this will be used to disconnect from the pod it is connected to
             $('form#disconnect').submit(function(event) {
                 socket.emit('disconnect request');
                 return false;
@@ -61,7 +64,7 @@
         <input type="submit" value="Send Command">
     </form>
     <form id="join" method="POST" action='#'>
-        <input type="text" name="join_room" id="join_room" placeholder="Pod ID">
+        <input type="text" name="join_pod" id="join_pod" placeholder="Pod ID">
         <input type="submit" value="Connect to Pod">
     </form>
     <form id="pod_stop" method="POST" action="#">

@@ -54,7 +54,7 @@ db = client.rumdloop_db
 
 pods = db.pods
 mancodes = db.mancodes
-tokens = db.tokens
+
 
 second = 1
 minute = 60 * second
@@ -161,12 +161,36 @@ def authenticate():
 
 
 
+"""
 
-@socketio.on('my event', namespace='/test')
+pod->client
+
+"""
+@socketio.on('data_send', namespace='/test')
 def test_message(message):
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': message['data'], 'count': session['receive_count']})
+    token = message['token']
+    res_code = verify_auth_token(token)
+    if res_code == 0:
+        pod_id = message['pod_id']
+        search = pods.find_one({'pod_id' : pod_id})
+        if search != None:
+            emit('data_receive_' + pod_id, {'data' : message['data']})
+
+"""
+
+client->pod
+
+"""
+@socketio.on('cmd_send', namespace='/test')
+def test_message(message):
+    token = message['token']
+    res_code = verify_auth_token(token)
+    if res_code == 0:
+        pod_id = message['pod_id']
+        search = pods.find_one({'pod_id' : pod_id})
+        if search != None:
+            emit('cmd_receive_' + pod_id, {'data' : message['data']})
+
 
 ### TODO: Figure out what's the difference between this and just a regular emit to a channel
 @socketio.on('my broadcast event', namespace='/test')
@@ -177,17 +201,19 @@ def test_broadcast_message(message):
          broadcast=True)
 
 
-@socketio.on('join', namespace='/test')
-def join(message):
-    join_room(message['room'])
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': 'In rooms: ' + ', '.join(rooms()),
-          'count': session['receive_count']})
-
 @socketio.on('stop', namespace='/test')
 def stop(message):
-    emit('my response', {'data' : 'Stopped', 'count' : 0})
+    token = message['token']
+    cmd = message['data']
+    res_code = verify_auth_token(token)
+    if res_code == 0 and cmd == 'pod_stop_cmd':
+        pod_id = message['pod_id']
+        search = pods.find_one({'pod_id' : pod_id})
+        if search != None:
+            emit('stop_' + pod_id, {'data' : 'pod_stop_cmd'})
+
+
+
 
 
 @socketio.on('disconnect request', namespace='/test')
