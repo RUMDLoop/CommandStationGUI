@@ -41,10 +41,13 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, \
 from pymongo import MongoClient
 import datetime
 import uuid
+import bcrypt
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
+app.config['SECRET_KEY1'] = 'secret!'
+app.config['SECRET_KEY2'] = 'secret?'
+app.config['SECRET_KEY3'] = 'secret*'
 socketio = SocketIO(app, async_mode=async_mode)
 thread = None
 
@@ -53,7 +56,10 @@ client = MongoClient()
 db = client.rumdloop_db
 
 pods = db.pods
+clients = db.clients
 mancodes = db.mancodes
+accesskeys = db.accesskeys
+
 
 
 second = 1
@@ -71,26 +77,90 @@ def background_thread():
                       {'data': 'Server generated event', 'count': count},
                       namespace='/test')
 
-@app.route('/<client>')
-def index(client=None):
-    if client == 'external':
-        return render_template('index.html')
-    elif client == 'internal':
-        ###TODO return a key/token for auth access
-        return jsonify({'success' : True})
-    else:
-        return jsonify({'success' : False})
+@app.route('/')
+def main():
+    return render_template('login.html')
+
+@app.route('/index')
+def index():
+    return render_template('index.html')
+
 
 """
+Input: {'username':'','password':'','access_key':''}
+Output:
+        SUCCESS: {'status':'ok','client_id':'','username':'','timestamp' : ''}
+        FAIL: {'status':'error','reason':'',timestamp:''}
+"""
+@app.route('/register',methods=['POST'])
+def register_client():
+    access_key = request.form['access_key']
+    verify = accesskeys.find_one({'access_key' : access_key})
+    res = None
+    if verify != None:
+        username = request.form['username']
+        password = request.form['password']
+        check = clients.find_one({'username' : username})
+        if check == None:
+            hashed = bcrypt.hashpw(password,bcrypt.gensalt())
+            uuid_code = uuid.uuid4()
+            uuid_str = str(uuid_code)
+            query = pods.find_one({'client_id' : uuid_str})
+            while query != None:
+                uuid_code = uuid.uuid4()
+                uuid_str = str(uuid_code)
+                query = pods.find_one({'client_id' : uuid_str})
+            cli = {'client_id' : uuid_str, 'username' : username, 'password' : hashed,'createdAt' : datetime.datetime.utcnow(),'updatedAt' : datetime.datetime.utcnow()}
+            insert_id = clients.insert_one(cli).inserted_id
+            if insert_id != None:
+                res = {'status' : 'ok', 'client_id' : uuid_str, 'username':username,'timestamp' : datetime.datetime.utcnow()}
+            else:
+                res = {'status' : 'error', 'reason': 'inserting into database failed','timestamp' : datetime.datetime.utcnow()}
+        else:
+            res = {'status' : 'error', 'reason': 'username already exists','timestamp' : datetime.datetime.utcnow()}
+    else:
+        res = {'status' : 'error', 'reason': 'incorrect access key','timestamp' : datetime.datetime.utcnow()}
+    return jsonify(res)
 
+"""
+Input: {'username':'','password':''}
+Output:
+        SUCCESS: {'status' : 'ok','client':'','secret_token':'','timestamp':''}
+        FAIL: {'status':'error','reason':'',timestamp:''}
+"""
+@app.route('/login',methods=['POST'])
+def login_client():
+    username = request.form['username']
+    check = clients.find_one({'username' : username})
+    res = None
+    if check != None:
+        password = request.form['password']
+        hashed = check['password']
+        if bcrypt.hashpw(password,hashed) == hashed:
+            token = get_auth_token({'is_pod' : False,'client_id' : check['client_id']},2)
+            if token != None:
+                res = {'status' : 'ok','client': check, 'secret_token' : token, 'timestamp':datetime.datetime.utcnow()}
+            else:
+                res = {'status':'error','reason':'token generation failed','timestamp':datetime.datetime.utcnow()}
+        else:
+            res = {'status':'error','reason':'wrong username or password','timestamp':datetime.datetime.utcnow()}
+    else:
+        res = {'status':'error','reason':'wrong username or password','timestamp':datetime.datetime.utcnow()}
+    print(jsonify(res))
+    return jsonify(res)
+
+
+
+"""
 Input: {'man_code':'shrey'}
 Output:
         SUCCESS: {'status':'ok','pod_id':'','timestamp':''}
         FAIL: {'status':'error','reason':'','timestamp':''}
 """
-@app.route('/getPodID',methods=['POST'])
+@app.route('/createPod',methods=['POST'])
 def create_pod():
     man_code = request.form['man_code']
+    response = None
     if man_code == None:
         response = {'status' : 'error','reason' : 'invalid manafacturer code','timestamp' : datetime.datetime.utcnow()}
     else:
@@ -106,7 +176,7 @@ def create_pod():
                 uuid_str = str(uuid_code)
                 query = pods.find_one({'pod_id' : uuid_str})
             pod = {'pod_id' : uuid_str, 'model' : 'Prometheus', 'operational' : True, 'createdAt' : datetime.datetime.utcnow(), 'updatedAt' : datetime.datetime.utcnow()}
-            post_id = pods.insert_one(pod)
+            post_id = pods.insert_one(pod).inserted_id
             if post_id != None:
                 response = {'status' : 'ok', 'pod_id' : uuid_str,'timestamp' : datetime.datetime.utcnow()}
             else:
@@ -115,22 +185,41 @@ def create_pod():
 
 
 
-def get_auth_token(data):
+
+
+
+def get_auth_token(data,option):
     is_pod = data['is_pod']
+    key = None
+    if option == 1:
+        key = app.config['SECRET_KEY1']
+    elif option == 2:
+        key = app.config['SECRET_KEY2']
     if is_pod:
         pod_id = data['pod_id']
         search = pods.find_one({'pod_id' : pod_id})
         if search != None:
-            s = Serializer('secret_key',expires_in = 10 * day)
+            s = Serializer(key,expires_in = day)
             return s.dumps({'id' : pod_id})
         else:
             return None
     else:
         client_id = data['client_id']
+        search = clients.find_one({'client_id' : client_id})
+        if search != None:
+            s = Serializer(key,expires_in = day)
+            return s.dumps({'id' : client_id})
+        else:
+            return None
 
 @staticmethod
-def verify_auth_token(token):
-    s = Serializer('secret_key')
+def verify_auth_token(token,option):
+    key = None
+    if option == 1:
+        key = app.config['SECRET_KEY1']
+    elif option == 2:
+        key = app.config['SECRET_KEY2']
+    s = Serializer(key)
     try:
         data = s.loads(token)
     except SignatureExpired:
@@ -148,13 +237,17 @@ Output:
 @app.route('/auth', methods=['POST'])
 def authenticate():
     is_pod = request.form['is_pod']
+    option = 0
+    res = None
     if is_pod:
         x_id = request.form['pod_id']
+        option = 1
     else:
         x_id = request.form['client_id']
-    token = get_auth_token({'is_pod' : is_pod, 'pod_id' : x_id if is_pod else None, 'client_id' : x_id if not is_pod else None})
+        option = 2
+    token = get_auth_token({'is_pod' : is_pod, 'pod_id' : x_id if is_pod else None, 'client_id' : x_id if not is_pod else None},option)
     if token != None:
-        res = {'status':'ok','pod_id' : x_id,'secret_token' : token, 'timestamp' : datetime.datetime.utcnow()}
+        res = {'status':'ok','_id' : x_id,'secret_token' : token, 'timestamp' : datetime.datetime.utcnow()}
     else:
         res = {'status':'error','reason' :'id not found', 'timestamp' : datetime.datetime.utcnow()}
     return jsonify(res)
@@ -169,7 +262,7 @@ pod->client
 @socketio.on('data_send', namespace='/test')
 def test_message(message):
     token = message['token']
-    res_code = verify_auth_token(token)
+    res_code = verify_auth_token(token,1)
     if res_code == 0:
         pod_id = message['pod_id']
         search = pods.find_one({'pod_id' : pod_id})
@@ -184,7 +277,7 @@ client->pod
 @socketio.on('cmd_send', namespace='/test')
 def test_message(message):
     token = message['token']
-    res_code = verify_auth_token(token)
+    res_code = verify_auth_token(token,2)
     if res_code == 0:
         pod_id = message['pod_id']
         search = pods.find_one({'pod_id' : pod_id})
@@ -205,7 +298,7 @@ def test_broadcast_message(message):
 def stop(message):
     token = message['token']
     cmd = message['data']
-    res_code = verify_auth_token(token)
+    res_code = verify_auth_token(token,2)
     if res_code == 0 and cmd == 'pod_stop_cmd':
         pod_id = message['pod_id']
         search = pods.find_one({'pod_id' : pod_id})

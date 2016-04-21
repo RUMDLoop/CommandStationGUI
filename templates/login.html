@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>RUMD Loop Command Station</title>
+    <script type="text/javascript" src="//code.jquery.com/jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function(){
+
+
+          $('form#login').submit(function(event) {
+
+            username_val = $('#username_field').val();
+            password_val = $('#password_field').val();
+
+
+
+            $.post("http://localhost:5000/login",{
+
+              username : username_val,
+              password : password_val,
+
+            }, function(data,status){
+
+                if(data['status'] === 'ok'){
+
+                  sessionStorage.client_id = data['client']['client_id'];
+                  sessionStorage.token = data['secret_token'];
+                  document.location.href = "http://localhost:5000/index"
+
+                }
+                else{
+
+                  alert(data['reason']);
+
+                }
+
+
+
+            });
+
+            return false;
+          });
+
+          $('form#register').submit(function(event) {
+
+            username_val = $('#r_username_field').val();
+            password_val = $('#r_password_field').val();
+            confirm_val =  $('#confirm_password_field').val();
+            access_val = $('#access_key_field').val();
+
+            if(password_val === confirm_val){
+
+              $.post("http://localhost:5000/register",{
+
+                username : username_val,
+                password : password_val,
+                access_key : access_val
+
+              }, function(data,status){
+
+                  if(data['status'] === 'ok'){
+
+                    alert('Success! You may login now!');
+
+                  }
+
+              });
+
+            }
+            else{
+
+              alert("Passwords don't match!");
+
+
+            }
+
+
+            return false;
+          });
+
+        });
+    </script>
+</head>
+<body>
+    <h1>RUMD Loop Command Station</h1>
+    <h2>Login</h2>
+    <form id="login" method="POST" action='#'>
+        <input type="text" name="username" id="username_field" placeholder="Username">
+        <br>
+        <input type="password" name="password" id="password_field" placeholder="Password">
+        <br>
+        <input type="submit" value="Login">
+    </form>
+    <br>
+    <h2>Register</h2>
+    <form id="register" method="POST" action='#'>
+        <input type="text" name="r_username_field" id="r_username_field" placeholder="Desired Username">
+        <br>
+        <input type="password" name="r_password_field" id="r_password_field" placeholder="Password">
+        <br>
+        <input type="password" name="confirm_password_field" id="confirm_password_field" placeholder="Confirm Password">
+        <br>
+        <input type="password" name="access_key_field" id="access_key_field" placeholder="SECRET access key">
+        <br>
+        <input type="submit" value="Register">
+    </form>
+
+
+</body>
+</html>

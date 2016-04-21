@@ -14,7 +14,7 @@
             // this is specially important when using the global namespace
             var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
 
-            var pod_id = ""
+            var pod_id_val = ""
 
             // event handler for server sent data
             // the server will emit any responses or data to the channel known as 'my response'
@@ -32,8 +32,14 @@
 
             //this will be used to send free form commands to the pod
             $('form#emit').submit(function(event) {
+              if(pod_id_val === null || pod_id_val === undefined || pod_id_val.length < 1){
+                alert('Pod ID is null!')
+              }
+              else{
                 socket.emit('cmd_send', {data: $('#emit_data').val(),pod_id:pod_id_val });
-                return false;
+              }
+
+              return false;
             });
 
             //this will be used to connect with a specific pod
@@ -44,7 +50,13 @@
 
             //this will be used for POD STOP command
             $('form#pod_stop').submit(function(event) {
-                socket.emit('stop', {data : 'pod_stop_cmd', token : token_val, pod_id : pod_id_val});
+                if(pod_id_val === null || pod_id_val === undefined || pod_id_val.length < 1){
+                  alert('Pod ID is null!')
+                }
+                else{
+                  socket.emit('stop', {data : 'pod_stop_cmd', token : token_val, pod_id : pod_id_val});
+                }
+
                 return false;
             });
 
