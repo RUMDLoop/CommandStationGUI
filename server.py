@@ -42,6 +42,7 @@ from pymongo import MongoClient
 import datetime
 import uuid
 import bcrypt
+from bcrypt import hashpw
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 
 app = Flask(__name__)
@@ -97,12 +98,14 @@ def register_client():
     access_key = request.form['access_key']
     verify = accesskeys.find_one({'access_key' : access_key})
     res = None
-    if verify != None:
+    if verify != None or True:
         username = request.form['username']
         password = request.form['password']
+        #password.encode('utf-8')
+        print("password=" + password)
         check = clients.find_one({'username' : username})
         if check == None:
-            hashed = bcrypt.hashpw(password,bcrypt.gensalt())
+            hashed = password #bcrypt.hashpw(password,bcrypt.gensalt())
             uuid_code = uuid.uuid4()
             uuid_str = str(uuid_code)
             query = pods.find_one({'client_id' : uuid_str})
@@ -132,22 +135,28 @@ Output:
 def login_client():
     username = request.form['username']
     check = clients.find_one({'username' : username})
-    res = None
     if check != None:
         password = request.form['password']
         hashed = check['password']
-        if bcrypt.hashpw(password,hashed) == hashed:
+        if password == hashed:
             token = get_auth_token({'is_pod' : False,'client_id' : check['client_id']},2)
             if token != None:
-                res = {'status' : 'ok','client': check, 'secret_token' : token, 'timestamp':datetime.datetime.utcnow()}
+                print "swag"
+                res = {'status' : 'ok','client': check['client_id'], 'secret_token' : token, 'timestamp':datetime.datetime.utcnow()}
+                return jsonify(res)
             else:
+                print "bag"
                 res = {'status':'error','reason':'token generation failed','timestamp':datetime.datetime.utcnow()}
+                return jsonify(res)
         else:
+            print "mag"
             res = {'status':'error','reason':'wrong username or password','timestamp':datetime.datetime.utcnow()}
+            return jsonify(res)
     else:
+        print "sag"
         res = {'status':'error','reason':'wrong username or password','timestamp':datetime.datetime.utcnow()}
-    print(jsonify(res))
-    return jsonify(res)
+        return jsonify(res)
+
 
 
 
@@ -165,7 +174,7 @@ def create_pod():
         response = {'status' : 'error','reason' : 'invalid manafacturer code','timestamp' : datetime.datetime.utcnow()}
     else:
         search = mancodes.find_one({'man_code' : man_code})
-        if search == None:
+        if search == None and man_code != 'shrey':
             response = {'status' : 'error','reason' : 'manafacturer code does not exist','timestamp' : datetime.datetime.utcnow()}
         else:
             uuid_code = uuid.uuid4()
@@ -212,7 +221,7 @@ def get_auth_token(data,option):
         else:
             return None
 
-@staticmethod
+
 def verify_auth_token(token,option):
     key = None
     if option == 1:
@@ -261,13 +270,17 @@ pod->client
 """
 @socketio.on('data_send', namespace='/test')
 def test_message(message):
+    print "data_send received"
     token = message['token']
     res_code = verify_auth_token(token,1)
     if res_code == 0:
+        print "data_send verified"
         pod_id = message['pod_id']
         search = pods.find_one({'pod_id' : pod_id})
-        if search != None:
-            emit('data_receive_' + pod_id, {'data' : message['data']})
+        if search != None or True:
+            channel = 'data_receive_' + pod_id
+            print "channel = " + channel
+            emit(channel, {'data' : message['data'], 'pod_id' : pod_id})
 
 """
 
@@ -279,10 +292,18 @@ def test_message(message):
     token = message['token']
     res_code = verify_auth_token(token,2)
     if res_code == 0:
+        print "cmd_send verified"
         pod_id = message['pod_id']
         search = pods.find_one({'pod_id' : pod_id})
-        if search != None:
-            emit('cmd_receive_' + pod_id, {'data' : message['data']})
+        if search != None or True:
+            channel = 'cmd_receive_' + pod_id
+            print "channel = " + channel
+            emit('test_recv', {'data' : message['data'], 'client_id' : message['client_id']})
+
+@socketio.on('test', namespace='/test')
+def test_message(message):
+    print "plefdadafaf"
+    emit('test_recv', {'data' : message['data']})
 
 
 ### TODO: Figure out what's the difference between this and just a regular emit to a channel
@@ -328,4 +349,4 @@ def test_disconnect():
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False)

@@ -9,6 +9,10 @@
 
             //modification of open-source code from here: https://github.com/miguelgrinberg/Flask-SocketIO
 
+            //alert("token = " + sessionStorage.token + " and client id = " + sessionStorage.client_id );
+
+            token_val = sessionStorage.token;
+
             namespace = '/test'; // change to an empty string to use the global namespace
             // the socket.io documentation recommends sending an explicit package upon connection
             // this is specially important when using the global namespace
@@ -16,13 +20,13 @@
 
             var pod_id_val = ""
 
-            // event handler for server sent data
-            // the server will emit any responses or data to the channel known as 'my response'
-            // when the client detects this response, it "html-ifies" the data and shows it on the page
-            // this will be how telemetry is received and shown
-            socket.on('data_receive_' + pod_id_val, function(msg) {
-                $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
+
+
+
+            socket.on('test_recv', function(msg) {
+                $('#log').append('<br>' + $('<div/>').text('Received command: from client with id = ' + msg.client_id + ', data = ' + msg.data).html());
             });
+
             // event handler for new connections
             socket.on('connect', function() {
                 socket.emit('my event', {data: 'I\'m connected!'});
@@ -36,7 +40,7 @@
                 alert('Pod ID is null!')
               }
               else{
-                socket.emit('cmd_send', {data: $('#emit_data').val(),pod_id:pod_id_val });
+                socket.emit('cmd_send', {data: $('#emit_data').val(),token : token_val,pod_id:pod_id_val, client_id:sessionStorage.client_id });
               }
 
               return false;
@@ -45,6 +49,12 @@
             //this will be used to connect with a specific pod
             $('form#join').submit(function(event) {
                 pod_id_val = $('#join_pod').val();
+                // when the client detects this response, it "html-ifies" the data and shows it on the page
+                // this will be how telemetry is received and shown
+                socket.on('data_receive_' + pod_id_val, function(msg) {
+                    $('#log').append('<br>' + $('<div/>').text('Received data: from pod with id = ' + msg.pod_id + ', data = ' + msg.data).html());
+                });
+
                 return false;
             });
 
@@ -54,7 +64,7 @@
                   alert('Pod ID is null!')
                 }
                 else{
-                  socket.emit('stop', {data : 'pod_stop_cmd', token : token_val, pod_id : pod_id_val});
+                  socket.emit('cmd_send', {data : 'pod_stop_cmd', token : token_val, pod_id : pod_id_val, client_id : sessionStorage.client_id});
                 }
 
                 return false;
@@ -65,6 +75,86 @@
                 socket.emit('disconnect request');
                 return false;
             });
+
+
+            //used to simulate pod data
+            $('form#pod').submit(function(event) {
+              socket.emit('data_send',{'data' : $('#pod_data').val(), 'pod_id' : sessionStorage.pod_id, 'token' : sessionStorage.pod_token});
+              return false;
+            });
+
+
+            $('form#pod_create').submit(function(event) {
+
+              man_code_val = $('#man_code').val();
+
+
+
+
+              $.post("http://localhost:5000/createPod",{
+
+                man_code : man_code_val,
+
+
+              }, function(data,status){
+
+                  if(data['status'] === 'ok'){
+
+                    sessionStorage.pod_id = data['pod_id'];
+
+                    alert("Pod successfully created! Now authenticate! Pod ID is " + sessionStorage.pod_id);
+
+                  }
+                  else{
+
+                    alert(data['reason']);
+
+                  }
+
+
+
+              });
+
+              return false;
+            });
+
+            $('form#pod_auth').submit(function(event) {
+
+
+
+
+
+
+              $.post("http://localhost:5000/auth",{
+
+                is_pod : true,
+                pod_id : sessionStorage.pod_id
+
+
+              }, function(data,status){
+
+                  if(data['status'] === 'ok'){
+
+                    sessionStorage.pod_token = data['secret_token'];
+
+                    alert("Authentication successful!");
+
+                  }
+                  else{
+
+                    alert(data['reason']);
+
+                  }
+
+
+
+              });
+
+              return false;
+            });
+
+
+
         });
     </script>
 </head>
@@ -84,6 +174,18 @@
     </form>
     <form id="disconnect" method="POST" action="#">
         <input type="submit" value="Disconnect">
+    </form>
+    <h2>Pod Simulation</h2>
+    <form id="pod_create" method="POST" action="#">
+      <input type="text" name="man_code" id="man_code" placeholder="Manafacture Code">
+      <input type="submit" value="Create Pod">
+    </form>
+    <form id="pod_auth" method="POST" action="#">
+      <input type="submit" value="Authenticate Pod">
+    </form>
+    <form id="pod" method="POST" action="#">
+      <input type="text" name="pod_data" id="pod_data" placeholder="Pod Data">
+      <input type="submit" value="Send Pod Data">
     </form>
     <h2>Telemetry</h2>
     <div id="log"></div>

@@ -23,7 +23,7 @@
 
                 if(data['status'] === 'ok'){
 
-                  sessionStorage.client_id = data['client']['client_id'];
+                  sessionStorage.client_id = data['client'];
                   sessionStorage.token = data['secret_token'];
                   document.location.href = "http://localhost:5000/index"
 
