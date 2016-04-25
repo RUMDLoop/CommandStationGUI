@@ -52,7 +52,108 @@
                 // when the client detects this response, it "html-ifies" the data and shows it on the page
                 // this will be how telemetry is received and shown
                 socket.on('data_receive_' + pod_id_val, function(msg) {
-                    $('#log').append('<br>' + $('<div/>').text('Received data: from pod with id = ' + msg.pod_id + ', data = ' + msg.data).html());
+
+                    /*
+                      types
+                        1 = xyz position
+                        2 = xyz velocity and magnitude
+                        3 = xyz acceleration and magnitudde
+                        4 = vehicle attitiude
+                        5 = internal pressure
+                        6 = external pressure
+                        7 = internal temp
+                        8 = external temp
+                        9 = power consumption
+                        10 = actuator state
+                        11 = WARNING during
+                        12 = WARNING after/prior
+
+                    */
+
+
+
+                    var type = msg.type;
+                    var text = "Received data from pod with id: " + msg.pod_id;
+                    var dataObj = JSON.parse(msg.data);
+                    if(type == 1){
+
+                        text = text + " -> Position = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 2){
+
+                        text = text + " -> Velocity = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " magnitude: " + dataObj.magnitude + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 3){
+
+                        text = text + " -> Acceleration = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " magnitude: " + dataObj.magnitude + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 4){
+
+                        text = text + " -> Attitude = roll: " + dataObj.roll + " pitch: " + dataObj.pitch + " yaw: " + dataObj.yaw +  " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 5){
+
+                        text = text + " -> Internal Pressure for ";
+                        var units = dataObj.units;
+
+                        for(var i = 0; i < units.length; i++){
+
+                          var unit = units[i];
+                          text = text + unit.name + " = " + unit.value + ", ";
+
+                        }
+
+                        text = text + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 6){
+
+                      text = text + " -> External Pressure = front: " + dataObj.front + " rear: " + dataObj.rear + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 7){
+
+                      text = text + " -> Internal Temperature = ambient: " + dataObj.ambient + " battery: " + dataObj.battery + " computer: " + dataObj.computer + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 8){
+
+                      text = text + " -> External Temperature = front: " + dataObj.front + " rear: " + dataObj.rear + " bottom: " + dataObj.bottom + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 9){
+
+                      text = text + " -> Power Consumption = " + dataObj.consumption + " at time: " + msg.timestamp;
+
+                    }
+                    else if(type == 10){
+
+                      text = text + " Actuator State = " + dataObj.state + " at time: " + msg.timestamp;
+
+                    }
+
+                    else if(type == 11){
+
+                      text = text + "RUNTIME WARNING = " + dataObj.warning + " at time: " + msg.timestamp;
+
+                    }
+
+                    else if(type == 12){
+
+                      text = text + dataObj.stage + " WARNING = " + dataObj.warning + " at time: " + msg.timestamp;
+
+                    }
+                    else{
+
+                      text = 'Received data: from pod with id = ' + msg.pod_id + ', data = ' + msg.data;
+
+                    }
+
+                    $('#log').append('<br>' + $('<div/>').text(text).html());
                 });
 
                 return false;

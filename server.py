@@ -4,6 +4,7 @@
 # different async modes, or leave it set to None for the application to choose
 # the best option based on available packages.
 async_mode = None
+debug = True
 
 if async_mode is None:
     try:
@@ -277,10 +278,10 @@ def test_message(message):
         print "data_send verified"
         pod_id = message['pod_id']
         search = pods.find_one({'pod_id' : pod_id})
-        if search != None or True:
+        if search != None or debug:
             channel = 'data_receive_' + pod_id
             print "channel = " + channel
-            emit(channel, {'data' : message['data'], 'pod_id' : pod_id})
+            emit(channel, {'data' : message['data'], 'pod_id' : pod_id, 'type' : message['type'], 'timestamp' : message['timestamp']})
 
 """
 
