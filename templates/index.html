@@ -9,14 +9,18 @@
 
             //modification of open-source code from here: https://github.com/miguelgrinberg/Flask-SocketIO
 
-            //alert("token = " + sessionStorage.token + " and client id = " + sessionStorage.client_id );
 
             token_val = sessionStorage.token;
 
             namespace = '/test'; // change to an empty string to use the global namespace
             // the socket.io documentation recommends sending an explicit package upon connection
             // this is specially important when using the global namespace
-            var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+
+            var socketURL = 'http://' + document.domain + ':' + location.port + namespace
+
+            console.log("socketURL = " + socketURL);
+
+            var socket = io.connect(socketURL);
 
             var pod_id_val = ""
 
@@ -29,6 +33,7 @@
 
             // event handler for new connections
             socket.on('connect', function() {
+                console.log("Connected!");
                 socket.emit('my event', {data: 'I\'m connected!'});
             });
             // handlers for the different forms in the page
@@ -49,6 +54,8 @@
             //this will be used to connect with a specific pod
             $('form#join').submit(function(event) {
                 pod_id_val = $('#join_pod').val();
+
+                alert('Listening to ' + pod_id_val);
                 // when the client detects this response, it "html-ifies" the data and shows it on the page
                 // this will be how telemetry is received and shown
                 socket.on('data_receive_' + pod_id_val, function(msg) {
@@ -67,17 +74,22 @@
                         10 = actuator state
                         11 = WARNING during
                         12 = WARNING after/prior
+                      */
 
-                    */
 
-
+                    alert('got data!');
 
                     var type = msg.type;
                     var text = "Received data from pod with id: " + msg.pod_id;
+                    alert('data = ' + msg.data);
                     var dataObj = JSON.parse(msg.data);
+
+
+
                     if(type == 1){
 
                         text = text + " -> Position = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " at time: " + msg.timestamp;
+                        console.log("text = " + text);
 
                     }
                     else if(type == 2){
@@ -153,7 +165,7 @@
 
                     }
 
-                    $('#log').append('<br>' + $('<div/>').text(text).html());
+                    $('#log').append('<br><br>' + $('<div/>').text(text).html() );
                 });
 
                 return false;
@@ -180,7 +192,7 @@
 
             //used to simulate pod data
             $('form#pod').submit(function(event) {
-              socket.emit('data_send',{'data' : $('#pod_data').val(), 'pod_id' : sessionStorage.pod_id, 'token' : sessionStorage.pod_token});
+              socket.emit('data_send',{'data' : $('#pod_data').val(), 'pod_id' : sessionStorage.pod_id, 'token' : sessionStorage.pod_token, 'type' : parseInt($('#data_type').val()), 'timestamp': (new Date()).toString()});
               return false;
             });
 
@@ -286,6 +298,9 @@
     </form>
     <form id="pod" method="POST" action="#">
       <input type="text" name="pod_data" id="pod_data" placeholder="Pod Data">
+      <br>
+      <input type="text" name="data_type" id="data_type" placeholder="Data Type ID (1-12)">
+      <br>
       <input type="submit" value="Send Pod Data">
     </form>
     <h2>Telemetry</h2>
