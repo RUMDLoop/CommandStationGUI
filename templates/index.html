@@ -1,7 +1,30 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 <head>
+  <title>RUMD Loop Command Station</title>
+
+</head>
+<body>
+<script type="text/javascript" src="../static/d3.js" charset="utf-8"></script>
+<script type="text/javascript" src="../static/d3-line-chart.js" charset="utf-8"></script>
+<script type="text/javascript">
+
+var data = {
+    name: 'series',
+    values: [{x: 1, y: 2}, {x: 2, y : 4}, {x:3, y: 3}]
+};
+new LineChart().for([data]).plot();
+
+</script>
+</body>
+</html>
+<!--<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
     <title>RUMD Loop Command Station</title>
+    <link rel="stylesheet" href="../static/graph.css">
+
     <script type="text/javascript" src="//code.jquery.com/jquery-1.4.2.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
     <script type="text/javascript" charset="utf-8">
@@ -272,8 +295,10 @@
     </script>
 </head>
 <body>
+
     <h1>RUMD Loop Command Station</h1>
     <h2>Send:</h2>
+
     <form id="emit" method="POST" action='#'>
         <input type="text" name="emit_data" id="emit_data" placeholder="Message">
         <input type="submit" value="Send Command">
@@ -305,5 +330,11 @@
     </form>
     <h2>Telemetry</h2>
     <div id="log"></div>
+    </body>
+
+<body>
 </body>
+<script src="http://d3js.org/d3.v3.js"></script>
+<script src="../static/graph.js"></script>
 </html>
+-->
