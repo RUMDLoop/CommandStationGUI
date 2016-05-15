@@ -42,7 +42,7 @@
 			lc.x_parse = x_parse || lc.x_parse;
 			lc.y_parse = y_parse || lc.y_parse;
 			return lc;
-		} 
+		}
 
 		lc.scale_using = function(x_scale, y_scale) {
 			lc.x_scale = x_scale || lc.x_scale;
@@ -143,14 +143,14 @@
 			.on("mouseenter", function(d) {
 				d3.select(this).classed('selected', true);
 				var all_points = d3.selectAll('.commit-circle.' + series.name.replace(/\W/g,'.'));
-				all_points.forEach(function(p) { 
+				all_points.forEach(function(p) {
 					d3.selectAll(p).classed('selected', true);
 				});
 			})
 			.on("mouseleave", function(d) {
 				d3.select(this).classed('selected', false);
 				var all_points = d3.selectAll('.commit-circle.' + series.name.replace(/\W/g,'.'));
-				all_points.forEach(function(p) { 
+				all_points.forEach(function(p) {
 					d3.selectAll(p).classed('selected', false);
 				});
 			});
@@ -207,6 +207,9 @@
 				plot_points(val, index);
 			});
 		}
+
+		
+
 		return lc;
 	}
 	return LineChart;
