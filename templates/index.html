@@ -64,7 +64,8 @@
             $('form#join').submit(function(event) {
                 pod_id_val = $('#join_pod').val();
 
-                alert('Listening to ' + pod_id_val);
+                $('#log').append('<br>' + $('<div/>').text('Listening to ' + pod_id_val).html());
+
                 // when the client detects this response, it "html-ifies" the data and shows it on the page
                 // this will be how telemetry is received and shown
                 socket.on('data_receive_' + pod_id_val, function(msg) {
@@ -87,17 +88,20 @@
 
 
 
-                    lineChart.remove();  
-                    alert('got data!');
+                    lineChart.remove();
+
 
                     var type = msg.type;
                     var text = "Received data from pod with id: " + msg.pod_id;
-                    alert('data = ' + msg.data);
+
                     var dataObj = JSON.parse(msg.data);
+
+
+
 
                     var data = {
                         name: 'swag',
-                        values: [{x: dataObj.x, y: dataObj.y}, {x: dataObj.x, y : dataObj.z},{x: dataObj.y, y : dataObj.z}]
+                        values: [{x: Number(dataObj.x), y: Number(dataObj.y)}, {x: Number(dataObj.y), y : Number(dataObj.z)}]
                     };
 
 
@@ -235,7 +239,9 @@
 
                     sessionStorage.pod_id = data['pod_id'];
 
-                    alert("Pod successfully created! Now authenticate! Pod ID is " + sessionStorage.pod_id);
+                    $('#log').append('<br>' + $('<div/>').text("Pod successfully created! Now authenticate! Pod ID is " + sessionStorage.pod_id).html());
+
+
 
                   }
                   else{
@@ -270,7 +276,8 @@
 
                     sessionStorage.pod_token = data['secret_token'];
 
-                    alert("Authentication successful!");
+                    $('#log').append('<br>' + $('<div/>').text("Authentication Successful!").html());
+
 
                   }
                   else{
