@@ -208,7 +208,12 @@
 			});
 		}
 
-		
+
+		lc.remove = function() {
+			if(lc.graph !== undefined && lc.graph !== null){
+				lc.graph.remove();
+			}
+		}
 
 		return lc;
 	}

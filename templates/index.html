@@ -87,7 +87,7 @@
 
 
 
-
+                    lineChart.remove();  
                     alert('got data!');
 
                     var type = msg.type;
@@ -104,6 +104,7 @@
                     lineChart.x_axis_text = "Time";
                     lineChart.y_axis_text = "Velocity";
                     lineChart.for([data]).plot();
+
 
                     if(type == 1){
 
