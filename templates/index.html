@@ -18,6 +18,9 @@
 
 
             var lineChart = new LineChart();
+            var velocityChart = new LineChart();
+
+            var dataPoints = [];
 
             token_val = sessionStorage.token;
 
@@ -88,7 +91,7 @@
 
 
 
-                    lineChart.remove();
+
 
 
                     var type = msg.type;
@@ -97,28 +100,70 @@
                     var dataObj = JSON.parse(msg.data);
 
 
+                    dataObj.type = type;
+                    console.log("object with data = " + dataObj.x);
+
+                    dataPoints.push({type: dataObj.type, x: dataObj.x, y: dataObj.y});
 
 
-                    var data = {
-                        name: 'swag',
-                        values: [{x: Number(dataObj.x), y: Number(dataObj.y)}, {x: Number(dataObj.y), y : Number(dataObj.z)}]
-                    };
-
-
-                    lineChart.x_axis_text = "Time";
-                    lineChart.y_axis_text = "Velocity";
-                    lineChart.for([data]).plot();
 
 
                     if(type == 1){
 
+
+                        lineChart.remove();
+
                         text = text + " -> Position = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " at time: " + msg.timestamp;
                         console.log("text = " + text);
+
+                        var valuesArray = [];
+
+                        for(var i = 0; i < dataPoints.length; i++){
+                          var obj = dataPoints[i];
+                          console.log("object with data = " + obj.x);
+                          if (Number(obj.type) == 1){
+                            console.log("match");
+                            valuesArray.push({x: Number(obj.x), y: Number(obj.y)});
+                          }
+                        }
+
+                        var data = {
+                            name: 'Position vs Time',
+                            values: valuesArray
+                        };
+
+
+                        lineChart.x_axis_text = "Time";
+                        lineChart.y_axis_text = "Position";
+                        lineChart.for([data]).plot();
 
                     }
                     else if(type == 2){
 
                         text = text + " -> Velocity = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " magnitude: " + dataObj.magnitude + " at time: " + msg.timestamp;
+
+                        velocityChart.remove();
+
+                        var valuesArray = [];
+
+                        for(var i = 0; i < dataPoints.length; i++){
+                          var obj = dataPoints[i];
+                          console.log("object with data = " + obj.x);
+                          if (Number(obj.type) == 2){
+                            console.log("match");
+                            valuesArray.push({x: Number(obj.x), y: Number(obj.y)});
+                          }
+                        }
+
+                        var data = {
+                            name: 'Velocity vs Time',
+                            values: valuesArray
+                        };
+
+
+                        velocityChart.x_axis_text = "Time";
+                        velocityChart.y_axis_text = "Velocity";
+                        velocityChart.for([data]).plot();
 
                     }
                     else if(type == 3){
@@ -336,6 +381,7 @@
     </form>
     <h2>Telemetry</h2>
     <div id="log"></div>
+    <div id="graphs"></div>
 
 
 
