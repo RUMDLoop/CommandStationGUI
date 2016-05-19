@@ -4,23 +4,24 @@
 <head>
     <meta charset="utf-8">
     <title>RUMD Loop Command Station</title>
-    <link rel="stylesheet" href="../static/graph.css">
+    
 
     <script type="text/javascript" src="//code.jquery.com/jquery-1.4.2.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
-    <script type="text/javascript" src="../static/d3.js" charset="utf-8"></script>
-    <script type="text/javascript" src="../static/d3-line-chart.js" charset="utf-8"></script>
+    <script type="text/javascript" src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function(){
 
+
+
             //modification of open-source code from here: https://github.com/miguelgrinberg/Flask-SocketIO
 
+            var pointsOfData = [];
 
 
-            var lineChart = new LineChart();
-            var velocityChart = new LineChart();
 
-            var dataPoints = [];
+
+
 
             token_val = sessionStorage.token;
 
@@ -99,84 +100,227 @@
 
                     var dataObj = JSON.parse(msg.data);
 
-
                     dataObj.type = type;
-                    console.log("object with data = " + dataObj.x);
+                    var d = new Date();
+                    var t = d.getTime();
+                    dataObj.secs = t;
 
-                    dataPoints.push({type: dataObj.type, x: dataObj.x, y: dataObj.y});
-
-
-
+                    pointsOfData.push(dataObj);
 
                     if(type == 1){
 
 
-                        lineChart.remove();
+                        $('#chartContainer').empty();
+
+
+
+                        var localData = [];
+                        var localData2 = [];
+                        var localData3 = [];
+                        for(var i = 0; i < pointsOfData.length; i++){
+                          var obj = pointsOfData[i];
+                          if(Number(obj.type) === 1){
+                            //TODO: replace x with REAL time
+
+                            localData.push({x: obj.secs, y: obj.x});
+                            localData2.push({x: obj.secs, y: obj.y});
+                            localData3.push({x: obj.secs, y: obj.z});
+                          }
+                        }
+
+                        var chart = new CanvasJS.Chart("chartContainer", {
+                          theme: "theme2",
+                          title:{
+                            text: "XYZ Position"
+                          },
+                          animationEnabled: true,
+                          axisY:{
+                            includeZero: false
+
+                          },
+                          data: [{
+                            type: "line",
+                            xValueType: "dateTime",
+                            dataPoints: localData
+                          }, {
+                            type: "line",
+                            xValueType: "dateTime",
+                            dataPoints: localData2
+                          },
+                          {
+                            type: "line",
+                            xValueType: "dateTime",
+                            dataPoints: localData3
+                          }
+                        ]
+                      });
+
+                        chart.render();
 
                         text = text + " -> Position = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " at time: " + msg.timestamp;
                         console.log("text = " + text);
 
-                        var valuesArray = [];
-
-                        for(var i = 0; i < dataPoints.length; i++){
-                          var obj = dataPoints[i];
-                          console.log("object with data = " + obj.x);
-                          if (Number(obj.type) == 1){
-                            console.log("match");
-                            valuesArray.push({x: Number(obj.x), y: Number(obj.y)});
-                          }
-                        }
-
-                        var data = {
-                            name: 'Position vs Time',
-                            values: valuesArray
-                        };
-
-
-                        lineChart.x_axis_text = "Time";
-                        lineChart.y_axis_text = "Position";
-                        lineChart.for([data]).plot();
 
                     }
                     else if(type == 2){
 
+                      $('#chartContainer2').empty();
+
+
+                      var localData = [];
+                      var localData2 = [];
+                      var localData3 = [];
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 2){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.x});
+                          localData2.push({x: obj.secs, y: obj.y});
+                          localData3.push({x: obj.secs, y: obj.z});
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer2", {
+                        theme: "theme2",
+                        title:{
+                          text: "XYZ Velocity"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }, {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData2
+                        },
+                        {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData3
+                        }
+                      ]
+                    });
+
+                      chart.render();
+
+
                         text = text + " -> Velocity = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " magnitude: " + dataObj.magnitude + " at time: " + msg.timestamp;
 
-                        velocityChart.remove();
 
-                        var valuesArray = [];
-
-                        for(var i = 0; i < dataPoints.length; i++){
-                          var obj = dataPoints[i];
-                          console.log("object with data = " + obj.x);
-                          if (Number(obj.type) == 2){
-                            console.log("match");
-                            valuesArray.push({x: Number(obj.x), y: Number(obj.y)});
-                          }
-                        }
-
-                        var data = {
-                            name: 'Velocity vs Time',
-                            values: valuesArray
-                        };
-
-
-                        velocityChart.x_axis_text = "Time";
-                        velocityChart.y_axis_text = "Velocity";
-                        velocityChart.for([data]).plot();
 
                     }
                     else if(type == 3){
+
+                      $('#chartContainer3').empty();
+
+
+                      var localData = [];
+                      var localData2 = [];
+                      var localData3 = [];
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 3){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.x});
+                          localData2.push({x: obj.secs, y: obj.y});
+                          localData3.push({x: obj.secs, y: obj.z});
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer3", {
+                        theme: "theme2",
+                        title:{
+                          text: "XYZ Acceleration"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }, {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData2
+                        },
+                        {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData3
+                        }
+                      ]
+                    });
+
+                      chart.render();
 
                         text = text + " -> Acceleration = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " magnitude: " + dataObj.magnitude + " at time: " + msg.timestamp;
 
                     }
                     else if(type == 4){
 
+                      $('#chartContainer4').empty();
+
+
+                      var localData = [];
+                      var localData2 = [];
+                      var localData3 = [];
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 4){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.roll});
+                          localData2.push({x: obj.secs, y: obj.pitch});
+                          localData3.push({x: obj.secs, y: obj.yaw});
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer4", {
+                        theme: "theme2",
+                        title:{
+                          text: "Roll Pitch and Yaw"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }, {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData2
+                        },
+                        {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData3
+                        }
+                      ]
+                    });
+
+                      chart.render();
+
                         text = text + " -> Attitude = roll: " + dataObj.roll + " pitch: " + dataObj.pitch + " yaw: " + dataObj.yaw +  " at time: " + msg.timestamp;
 
                     }
                     else if(type == 5){
+
+
 
                         text = text + " -> Internal Pressure for ";
                         var units = dataObj.units;
@@ -193,25 +337,230 @@
                     }
                     else if(type == 6){
 
+                      $('#chartContainer6').empty();
+
+
+                      var localData = [];
+                      var localData2 = [];
+
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 6){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.front});
+                          localData2.push({x: obj.secs, y: obj.rear});
+
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer6", {
+                        theme: "theme2",
+                        title:{
+                          text: "External Pressure: Front and Rear"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }, {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData2
+                        }
+                      ]
+                    });
+
+                      chart.render();
+
                       text = text + " -> External Pressure = front: " + dataObj.front + " rear: " + dataObj.rear + " at time: " + msg.timestamp;
 
                     }
                     else if(type == 7){
+
+                      $('#chartContainer7').empty();
+
+
+                      var localData = [];
+                      var localData2 = [];
+                      var localData3 = [];
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 7){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.ambient});
+                          localData2.push({x: obj.secs, y: obj.battery});
+                          localData3.push({x: obj.secs, y: obj.computer});
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer7", {
+                        theme: "theme2",
+                        title:{
+                          text: "Internal Temperature: ambient, battery, computer"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }, {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData2
+                        },
+                        {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData3
+                        }
+                      ]
+                    });
+
+                      chart.render();
 
                       text = text + " -> Internal Temperature = ambient: " + dataObj.ambient + " battery: " + dataObj.battery + " computer: " + dataObj.computer + " at time: " + msg.timestamp;
 
                     }
                     else if(type == 8){
 
+                      $('#chartContainer8').empty();
+
+
+                      var localData = [];
+                      var localData2 = [];
+                      var localData3 = [];
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 8){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.front});
+                          localData2.push({x: obj.secs, y: obj.rear});
+                          localData3.push({x: obj.secs, y: obj.bottom});
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer8", {
+                        theme: "theme2",
+                        title:{
+                          text: "External Temperature: front, rear, bottom"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }, {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData2
+                        },
+                        {
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData3
+                        }
+                      ]
+                    });
+
+                      chart.render();
+
                       text = text + " -> External Temperature = front: " + dataObj.front + " rear: " + dataObj.rear + " bottom: " + dataObj.bottom + " at time: " + msg.timestamp;
 
                     }
                     else if(type == 9){
 
+                      $('#chartContainer9').empty();
+
+
+                      var localData = [];
+
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 9){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.consumption});
+
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer9", {
+                        theme: "theme2",
+                        title:{
+                          text: "Power Consumption"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }
+                      ]
+                    });
+
+                      chart.render();
+
+
+
                       text = text + " -> Power Consumption = " + dataObj.consumption + " at time: " + msg.timestamp;
 
                     }
                     else if(type == 10){
+
+                      $('#chartContainer10').empty();
+
+
+                      var localData = [];
+
+                      for(var i = 0; i < pointsOfData.length; i++){
+                        var obj = pointsOfData[i];
+                        if(Number(obj.type) === 10){
+                          //TODO: replace x with REAL time
+
+                          localData.push({x: obj.secs, y: obj.state});
+
+                        }
+                      }
+
+                      var chart = new CanvasJS.Chart("chartContainer10", {
+                        theme: "theme2",
+                        title:{
+                          text: "Actuator State"
+                        },
+                        animationEnabled: true,
+                        axisY:{
+                          includeZero: false
+
+                        },
+                        data: [{
+                          type: "line",
+                          xValueType: "dateTime",
+                          dataPoints: localData
+                        }
+                      ]
+                    });
+
+                      chart.render();
 
                       text = text + " Actuator State = " + dataObj.state + " at time: " + msg.timestamp;
 
@@ -380,9 +729,37 @@
       <input type="submit" value="Send Pod Data">
     </form>
     <h2>Telemetry</h2>
+    <div id="container" style="overflow:hidden;width:2000px">
+      <div id="chartContainer" style="float:left;height: 300px; width: 50%;">
+      </div>
+      <div id="chartContainer2" style="float:left;height: 300px; width: 50%;">
+      </div>
+    </div>
+    <div id="container2" style="overflow:hidden;width:2000px">
+      <div id="chartContainer3" style="float:left;height: 300px; width: 50%;">
+      </div>
+      <div id="chartContainer4" style="float:left;height: 300px; width: 50%;">
+      </div>
+    </div>
+    <div id="container3" style="overflow:hidden;width:2000px">
+      <div id="chartContainer5" style="float:left;height: 300px; width: 50%;">
+      </div>
+      <div id="chartContainer6" style="float:left;height: 300px; width: 50%;">
+      </div>
+    </div>
+    <div id="container4" style="overflow:hidden;width:2000px">
+      <div id="chartContainer7" style="float:left;height: 300px; width: 50%;">
+      </div>
+      <div id="chartContainer8" style="float:left;height: 300px; width: 50%;">
+      </div>
+    </div>
+    <div id="container5" style="overflow:hidden;width:2000px">
+      <div id="chartContainer9" style="float:left;height: 300px; width: 50%;">
+      </div>
+      <div id="chartContainer10" style="float:left;height: 300px; width: 50%;">
+      </div>
+    </div>
     <div id="log"></div>
-    <div id="graphs"></div>
-
 
 
     </body>
