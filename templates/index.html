@@ -22,10 +22,32 @@
             var intervalId;
 
             var initializedTypes = [];
+
+            //memory inefficient but doesn't matter as it'll be on a remote server
             var localDataP = [];
             var localData2P = [];
             var localData3P = [];
             var posChart;
+
+            var localDataV = [];
+            var localData2V = [];
+            var localData3V = [];
+            var velChart;
+
+            var localDataA = [];
+            var localData2A = [];
+            var localData3A = [];
+            var accChart;
+
+            var localDataAtt = [];
+            var localData2Att = [];
+            var localData3Att = [];
+            var attChart;
+
+
+
+
+
 
 
             token_val = sessionStorage.token;
@@ -121,7 +143,6 @@
 
                     if($.inArray(1,initializedTypes) < 0){
 
-                        console.log("not got yet");
 
                         for(var i = 0; i < pointsOfData.length; i++){
                           var obj = pointsOfData[i];
@@ -163,14 +184,11 @@
 
                         posChart.render();
 
-                        text = text + " -> Position = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " at time: " + msg.timestamp;
-                        console.log("text = " + text);
 
                         initializedTypes.push(1);
                       }
                       else{
 
-                        console.log("got");
 
                         localDataP.push({x: dataObj.secs, y: dataObj.x});
                         localData2P.push({x: dataObj.secs, y: dataObj.y});
@@ -180,27 +198,26 @@
 
                       }
 
+                      text = text + " -> Position = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " at time: " + msg.timestamp;
+
+
                     }
                     else if(type == 2){
 
-                      $('#chartContainer2').empty();
+                      if($.inArray(2,initializedTypes) < 0){
 
-
-                      var localData = [];
-                      var localData2 = [];
-                      var localData3 = [];
                       for(var i = 0; i < pointsOfData.length; i++){
                         var obj = pointsOfData[i];
                         if(Number(obj.type) === 2){
                           //TODO: replace x with REAL time
 
-                          localData.push({x: obj.secs, y: obj.x});
-                          localData2.push({x: obj.secs, y: obj.y});
-                          localData3.push({x: obj.secs, y: obj.z});
+                          localDataV.push({x: obj.secs, y: obj.x});
+                          localData2V.push({x: obj.secs, y: obj.y});
+                          localData3V.push({x: obj.secs, y: obj.z});
                         }
                       }
 
-                      var chart = new CanvasJS.Chart("chartContainer2", {
+                      velChart = new CanvasJS.Chart("chartContainer2", {
                         theme: "theme2",
                         title:{
                           text: "XYZ Velocity"
@@ -213,21 +230,35 @@
                         data: [{
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData
+                          dataPoints: localDataV
                         }, {
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData2
+                          dataPoints: localData2V
                         },
                         {
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData3
+                          dataPoints: localData3V
                         }
                       ]
                     });
 
-                      chart.render();
+                      velChart.render();
+
+                      initializedTypes.push(2);
+
+                    }
+                    else{
+
+                      localDataV.push({x: dataObj.secs, y: dataObj.x});
+                      localData2V.push({x: dataObj.secs, y: dataObj.y});
+                      localData3V.push({x: dataObj.secs, y: dataObj.z});
+
+                      velChart.render();
+
+
+                    }
 
 
                         text = text + " -> Velocity = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " magnitude: " + dataObj.magnitude + " at time: " + msg.timestamp;
@@ -237,20 +268,16 @@
                     }
                     else if(type == 3){
 
-                      $('#chartContainer3').empty();
+                      if($.inArray(3,initializedTypes) < 0){
 
-
-                      var localData = [];
-                      var localData2 = [];
-                      var localData3 = [];
                       for(var i = 0; i < pointsOfData.length; i++){
                         var obj = pointsOfData[i];
                         if(Number(obj.type) === 3){
                           //TODO: replace x with REAL time
 
-                          localData.push({x: obj.secs, y: obj.x});
-                          localData2.push({x: obj.secs, y: obj.y});
-                          localData3.push({x: obj.secs, y: obj.z});
+                          localDataA.push({x: obj.secs, y: obj.x});
+                          localData2A.push({x: obj.secs, y: obj.y});
+                          localData3A.push({x: obj.secs, y: obj.z});
                         }
                       }
 
@@ -267,41 +294,50 @@
                         data: [{
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData
+                          dataPoints: localDataA
                         }, {
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData2
+                          dataPoints: localData2A
                         },
                         {
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData3
+                          dataPoints: localData3A
                         }
                       ]
                     });
 
-                      chart.render();
+                      accChart.render();
+
+                      initializedTypes.push(3);
+
+                    }
+                    else{
+
+                      localDataA.push({x: databj.secs, y: dataObj.x});
+                      localData2A.push({x: dataObj.secs, y: dataObj.y});
+                      localData3A.push({x: dataObj.secs, y: dataObj.z});
+
+                      accChart.render();
+
+                    }
 
                         text = text + " -> Acceleration = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " magnitude: " + dataObj.magnitude + " at time: " + msg.timestamp;
 
                     }
                     else if(type == 4){
 
-                      $('#chartContainer4').empty();
+                      if($.inArray(4,initializedTypes) < 0){
 
-
-                      var localData = [];
-                      var localData2 = [];
-                      var localData3 = [];
-                      for(var i = 0; i < pointsOfData.length; i++){
+                        for(var i = 0; i < pointsOfData.length; i++){
                         var obj = pointsOfData[i];
                         if(Number(obj.type) === 4){
                           //TODO: replace x with REAL time
 
-                          localData.push({x: obj.secs, y: obj.roll});
-                          localData2.push({x: obj.secs, y: obj.pitch});
-                          localData3.push({x: obj.secs, y: obj.yaw});
+                          localDataAtt.push({x: obj.secs, y: obj.roll});
+                          localData2Att.push({x: obj.secs, y: obj.pitch});
+                          localData3Att.push({x: obj.secs, y: obj.yaw});
                         }
                       }
 
@@ -318,21 +354,32 @@
                         data: [{
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData
+                          dataPoints: localDataAtt
                         }, {
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData2
+                          dataPoints: localData2Att
                         },
                         {
                           type: "line",
                           xValueType: "dateTime",
-                          dataPoints: localData3
+                          dataPoints: localData3Att
                         }
                       ]
                     });
 
-                      chart.render();
+                      attChart.render();
+
+                    }
+                    else{
+
+                      localDataAtt.push({x: databj.secs, y: dataObj.roll});
+                      localData2Att.push({x: dataObj.secs, y: dataObj.pitch});
+                      localData3Att.push({x: dataObj.secs, y: dataObj.yaw});
+
+                      attChart.render();
+
+                    }
 
                         text = text + " -> Attitude = roll: " + dataObj.roll + " pitch: " + dataObj.pitch + " yaw: " + dataObj.yaw +  " at time: " + msg.timestamp;
 
