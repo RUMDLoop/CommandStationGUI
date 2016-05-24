@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>RUMD Loop Command Station</title>
-    
+
 
     <script type="text/javascript" src="//code.jquery.com/jquery-1.4.2.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
@@ -18,9 +18,14 @@
 
             var pointsOfData = [];
 
+            var intervalCounter = 0;
+            var intervalId;
 
-
-
+            var initializedTypes = [];
+            var localDataP = [];
+            var localData2P = [];
+            var localData3P = [];
+            var posChart;
 
 
             token_val = sessionStorage.token;
@@ -98,6 +103,8 @@
                     var type = msg.type;
                     var text = "Received data from pod with id: " + msg.pod_id;
 
+                    console.log("data test = " + msg.data);
+
                     var dataObj = JSON.parse(msg.data);
 
                     dataObj.type = type;
@@ -110,25 +117,24 @@
                     if(type == 1){
 
 
-                        $('#chartContainer').empty();
+                        //$('#chartContainer').empty();
 
+                    if($.inArray(1,initializedTypes) < 0){
 
+                        console.log("not got yet");
 
-                        var localData = [];
-                        var localData2 = [];
-                        var localData3 = [];
                         for(var i = 0; i < pointsOfData.length; i++){
                           var obj = pointsOfData[i];
                           if(Number(obj.type) === 1){
                             //TODO: replace x with REAL time
 
-                            localData.push({x: obj.secs, y: obj.x});
-                            localData2.push({x: obj.secs, y: obj.y});
-                            localData3.push({x: obj.secs, y: obj.z});
+                            localDataP.push({x: obj.secs, y: obj.x});
+                            localData2P.push({x: obj.secs, y: obj.y});
+                            localData3P.push({x: obj.secs, y: obj.z});
                           }
                         }
 
-                        var chart = new CanvasJS.Chart("chartContainer", {
+                        posChart = new CanvasJS.Chart("chartContainer", {
                           theme: "theme2",
                           title:{
                             text: "XYZ Position"
@@ -141,25 +147,38 @@
                           data: [{
                             type: "line",
                             xValueType: "dateTime",
-                            dataPoints: localData
+                            dataPoints: localDataP
                           }, {
                             type: "line",
                             xValueType: "dateTime",
-                            dataPoints: localData2
+                            dataPoints: localData2P
                           },
                           {
                             type: "line",
                             xValueType: "dateTime",
-                            dataPoints: localData3
+                            dataPoints: localData3P
                           }
                         ]
                       });
 
-                        chart.render();
+                        posChart.render();
 
                         text = text + " -> Position = x: " + dataObj.x + " y: " + dataObj.y + " z: " + dataObj.z + " at time: " + msg.timestamp;
                         console.log("text = " + text);
 
+                        initializedTypes.push(1);
+                      }
+                      else{
+
+                        console.log("got");
+
+                        localDataP.push({x: dataObj.secs, y: dataObj.x});
+                        localData2P.push({x: dataObj.secs, y: dataObj.y});
+                        localData3P.push({x: dataObj.secs, y: dataObj.z});
+
+                        posChart.render();
+
+                      }
 
                     }
                     else if(type == 2){
@@ -687,6 +706,30 @@
               return false;
             });
 
+          $('form#pod_sim').submit(function(event){
+
+                intervalId = setInterval(function(){
+
+                  var data = {
+                    x : (Math.floor(Math.random() * (11)) + 10),
+                    y : (Math.floor(Math.random() * (11)) + 10),
+                    z : (Math.floor(Math.random() * (11)) + 10)
+                  };
+
+                  socket.emit('data_send',{'data' : JSON.stringify(data), 'pod_id' : sessionStorage.pod_id, 'token' : sessionStorage.pod_token, 'type' : 1, 'timestamp': (new Date()).toString()});
+
+                  intervalCounter = intervalCounter + 1;
+
+                  if(intervalCounter === 60){
+                    clearInterval(intervalId);
+                  }
+
+                },1000);
+
+                return false;
+
+          });
+
 
 
         });
@@ -727,6 +770,9 @@
       <input type="text" name="data_type" id="data_type" placeholder="Data Type ID (1-12)">
       <br>
       <input type="submit" value="Send Pod Data">
+    </form>
+    <form id="pod_sim" method="POST" action="#">
+      <input type="submit" value="Start Simulation">
     </form>
     <h2>Telemetry</h2>
     <div id="container" style="overflow:hidden;width:2000px">
